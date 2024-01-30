@@ -1,10 +1,11 @@
+import 'package:programador/helpers/pusher_client.dart';
 import 'package:programador/model/meeting.dart';
 import 'package:programador/model/my_appointment.dart';
 import 'package:programador/model/meeting_data_source.dart';
 import 'package:programador/theme/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
-// import 'package:syncfusion_localizations/syncfusion_localizations.dart';
+import 'package:programador/helpers/notifications.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -14,9 +15,12 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
+  String dataSearch = '';
   MyAppointment myAppointment = MyAppointment();
   CalendarView calendarView = CalendarView.schedule;
   CalendarController calendarController = CalendarController();
+  MyPusherClient myPusherClient =
+      MyPusherClient(channelName: 'ibjr', eventName: 'ibjr');
   TextStyle styleTextCalendar = const TextStyle(
     color: Colors.white,
     fontWeight: FontWeight.bold,
@@ -33,6 +37,18 @@ class _CalendarPageState extends State<CalendarPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    _conectPusher();
+    _loadNotifications();
+  }
+
+  void _conectPusher() async {
+    myPusherClient.onConnect();
+  }
+
+  void _loadNotifications() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    // Aquí inicializamos la instancia de notificaciones
+    await initNotifications();
   }
 
   @override
@@ -61,52 +77,69 @@ class _CalendarPageState extends State<CalendarPage> {
       body: SafeArea(
           child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      calendarView = CalendarView.month;
-                      calendarController.view = calendarView;
-                    });
-                  },
-                  child: Text('Mes')),
-              OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      calendarView = CalendarView.week;
-                      calendarController.view = calendarView;
-                    });
-                  },
-                  child: Text('Semana')),
-              OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      calendarView = CalendarView.day;
-                      calendarController.view = calendarView;
-                    });
-                  },
-                  child: Text('Día')),
-              OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      calendarView = CalendarView.schedule;
-                      calendarController.view = calendarView;
-                    });
-                  },
-                  child: Text('Cronograma')),
-            ],
-          ),
+          inputSearch(),
+          viewsCalendar(),
           Expanded(child: programador())
         ],
       )),
     );
   }
 
+  TextField inputSearch() {
+    return TextField(
+      onChanged: (value) {
+        setState(() {
+          dataSearch = value;
+        });
+        setState(() {});
+      },
+      decoration: InputDecoration(icon: Icon(Icons.search), hintText: 'Buscar'),
+    );
+  }
+
+  Row viewsCalendar() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        OutlinedButton(
+            onPressed: () {
+              setState(() {
+                calendarView = CalendarView.month;
+                calendarController.view = calendarView;
+              });
+            },
+            child: Text('Mes')),
+        OutlinedButton(
+            onPressed: () {
+              setState(() {
+                calendarView = CalendarView.week;
+                calendarController.view = calendarView;
+              });
+            },
+            child: Text('Semana')),
+        OutlinedButton(
+            onPressed: () {
+              setState(() {
+                calendarView = CalendarView.day;
+                calendarController.view = calendarView;
+              });
+            },
+            child: Text('Día')),
+        OutlinedButton(
+            onPressed: () {
+              setState(() {
+                calendarView = CalendarView.schedule;
+                calendarController.view = calendarView;
+              });
+            },
+            child: Text('Cronograma')),
+      ],
+    );
+  }
+
   FutureBuilder<List<Meeting>> programador() {
     return FutureBuilder(
-      future: myAppointment.getOrganizeData(),
+      future: myAppointment.getOrganizeData(dataSearch),
       builder: (BuildContext context, AsyncSnapshot snapshot) {
         if (!snapshot.hasData) {
           return Container(

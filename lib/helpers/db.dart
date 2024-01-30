@@ -33,9 +33,13 @@ class DB {
     return database.delete(_table);
   }
 
-  static Future dbMeeting() async {
+  static Future listDbMeeting(dataSearch) async {
     Database database = await _openDB();
-    final List<Map<String, dynamic>> meetingMap = await database.query(_table);
+
+    final List<Map<String, dynamic>> meetingMap = dataSearch != ''
+        ? await database.query(_table,
+            where: 'subject LIKE ?', whereArgs: ["%$dataSearch%"])
+        : await database.query(_table);
     return meetingMap;
 
     // return List.generate(
@@ -48,6 +52,16 @@ class DB {
     //               kColorsByEvent[meetingMap[i]['typeEvent']] ?? Colors.blue,
     //           isAllDay: false,
     //         ));
+  }
+
+  static Future currentMeetings() async {
+    Database database = await _openDB();
+    String currentDate = DateTime.now().toString().substring(0, 10);
+    final List<Map<String, dynamic>> meetingMap = await database.query(_table,
+        columns: ['subject'],
+        where: 'startTime LIKE ?',
+        whereArgs: ['%$currentDate%']);
+    return meetingMap;
   }
 
   static Future dropTable() async {

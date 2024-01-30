@@ -10,7 +10,7 @@ import 'package:programador/helpers/db.dart';
 const String _localVersion = 'localVersion';
 
 class MyAppointment {
-  Future<List<Meeting>> getOrganizeData() async {
+  Future<List<Meeting>> getOrganizeData(dataSearch) async {
     print('comienza');
     // DB.dropTable();
     dynamic data;
@@ -18,7 +18,7 @@ class MyAppointment {
     try {
       String checkVersionUrl = await getCheckCalendarVersion();
       if (checkVersionUrl == _localVersion) {
-        data = await getDataDB();
+        data = await getDataDB(dataSearch);
       } else {
         data = await getDataFromGoogleSheet(checkVersionUrl);
       }
@@ -42,8 +42,8 @@ class MyAppointment {
     return appointmentData;
   }
 
-  Future getDataDB() async {
-    dynamic data = await DB.dbMeeting();
+  Future getDataDB(dataSearch) async {
+    dynamic data = await DB.listDbMeeting(dataSearch);
     return data;
   }
 
